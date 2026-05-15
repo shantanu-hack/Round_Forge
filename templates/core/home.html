@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Round Forge - AI Interview Readiness{% endblock %}
+{% block content %}
+<section class="hero">
+    <div class="hero-copy">
+        <p class="eyebrow">AI readiness simulation</p>
+        <h1>Round Forge</h1>
+        <p class="hero-subtitle">A realistic interview readiness simulator for company-specific rounds, timed answers, AI evaluation, and professional improvement reports.</p>
+        <div class="hero-actions">
+            {% if user.is_authenticated %}
+                <a class="button" href="{% url 'dashboard:home' %}">Enter Dashboard</a>
+            {% else %}
+                <a class="button" href="{% url 'authentication:register' %}">Create Account</a>
+                <a class="button button-ghost" href="{% url 'authentication:login' %}">Login</a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="hero-panel">
+        <div class="signal-line">
+            <span>Simulation State</span>
+            <strong>Ready</strong>
+        </div>
+        <div class="round-preview">
+            <span class="pulse"></span>
+            <div>
+                <h3>Company benchmark engine</h3>
+                <p>Questions are stored first. Answers are evaluated together only after both responses are submitted.</p>
+            </div>
+        </div>
+        <div class="metric-grid">
+            <div><strong>2</strong><span>Companies</span></div>
+            <div><strong>2</strong><span>Max questions per round</span></div>
+            <div><strong>AI</strong><span>Gemini scoring</span></div>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="section-heading">
+        <p class="eyebrow">Tracks</p>
+        <h2>Choose a benchmark</h2>
+    </div>
+    <div class="card-grid two">
+        {% for company in companies %}
+            <article class="company-card" style="--accent: {{ company.accent_color }}">
+                <div class="company-topline">
+                    <span class="company-dot"></span>
+                    <span>{{ company.pass_threshold }}% threshold</span>
+                </div>
+                <h3>{{ company.name }}</h3>
+                <p>{{ company.tagline }}</p>
+                <a href="{% if user.is_authenticated %}{% url 'companies:detail' company.slug %}{% else %}{% url 'authentication:login' %}{% endif %}">Open simulation</a>
+            </article>
+        {% empty %}
+            <p class="muted">Seed companies with <code>python manage.py seed_roundforge</code>.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

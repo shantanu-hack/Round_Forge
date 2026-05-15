@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load socialaccount %}
+{% block title %}Register - Round Forge{% endblock %}
+{% block content %}
+<section class="auth-shell">
+    <div class="auth-panel">
+        <p class="eyebrow">Build readiness</p>
+        <h1>Create account</h1>
+        <form method="post" class="form-card">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div class="form-errors form-errors-global">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <label class="field-block{% if form.full_name.errors %} has-errors{% endif %}">
+                <span>Full name</span>
+                {{ form.full_name }}
+                {% if form.full_name.errors %}<span class="form-errors">{{ form.full_name.errors }}</span>{% endif %}
+            </label>
+
+            <label class="field-block{% if form.email.errors %} has-errors{% endif %}">
+                <span>Email</span>
+                {{ form.email }}
+                {% if form.email.errors %}<span class="form-errors">{{ form.email.errors }}</span>{% endif %}
+            </label>
+
+            <label class="field-block{% if form.target_role.errors %} has-errors{% endif %}">
+                <span>Target role</span>
+                {{ form.target_role }}
+                {% if form.target_role.errors %}<span class="form-errors">{{ form.target_role.errors }}</span>{% endif %}
+            </label>
+
+            <label class="field-block{% if form.password1.errors %} has-errors{% endif %}">
+                <span>Password</span>
+                {{ form.password1 }}
+                {% if form.password1.errors %}<span class="form-errors">{{ form.password1.errors }}</span>{% endif %}
+            </label>
+
+            <label class="field-block{% if form.password2.errors %} has-errors{% endif %}">
+                <span>Confirm password</span>
+                {{ form.password2 }}
+                {% if form.password2.errors %}<span class="form-errors">{{ form.password2.errors }}</span>{% endif %}
+            </label>
+            <button class="button" type="submit">Start Simulation</button>
+        </form>
+        <a class="oauth-button" href="{% provider_login_url 'google' %}">Continue with Google</a>
+    </div>
+</section>
+{% endblock %}

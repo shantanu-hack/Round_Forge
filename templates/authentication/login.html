@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load socialaccount %}
+{% block title %}Login - Round Forge{% endblock %}
+{% block content %}
+<section class="auth-shell">
+    <div class="auth-panel">
+        <p class="eyebrow">Secure session</p>
+        <h1>Login</h1>
+        <form method="post" class="form-card">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            <label>Email {{ form.email }}</label>
+            <label>Password {{ form.password }}</label>
+            <button class="button" type="submit">Enter Round Forge</button>
+        </form>
+        <a class="oauth-button" href="{% provider_login_url 'google' %}">Continue with Google</a>
+        <p class="muted">New here? <a href="{% url 'authentication:register' %}">Create an account</a>.</p>
+    </div>
+</section>
+{% endblock %}

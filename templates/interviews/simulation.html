@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+{% block body_attrs %}{% if round_transition and round_transition.result == "pass" %}data-round-result="pass" data-round-score="{{ round_transition.score }}" data-round-name="{{ round_transition.round_name|escape }}" data-next-round="{{ round_transition.next_round|escape }}"{% endif %}{% endblock %}
+{% block title %}{{ simulation.company.name }} — RoundForge{% endblock %}
+
+{% block content %}
+<!-- Hide default Django toasts to enforce inline cinematic feedback -->
+<style>
+    .toast, .messages, [role="alert"] { display: none !important; }
+</style>
+
+<div class="sim-atmosphere" aria-hidden="true">
+    <div class="atm-orb atm-orb--a"></div>
+    <div class="atm-orb atm-orb--b"></div>
+    <div class="atm-orb atm-orb--c"></div>
+</div>
+
+<section class="sim-shell" data-timer-root>
+
+    <!-- ░░ RAIL ░░ -->
+    <aside class="sim-rail" id="simRail">
+        <div class="rail-company">
+            <span class="rail-company-dot"></span>
+            <span>{{ simulation.company.name }}</span>
+        </div>
+        <nav class="rail-rounds" aria-label="Round progress">
+            {% for item in progress_records %}
+            <div class="rail-item rail-item--{{ item.state }}"
+                 aria-current="{% if item.state == 'current' %}step{% else %}false{% endif %}">
+                <div class="rail-item-glyph">
+                    {% if item.state == 'passed' %}
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" class="rail-check-anim">
+                        <path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="currentColor" stroke-width="2"
+                              stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    {% elif item.state == 'failed' %}
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                        <path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.6"
+                              stroke-linecap="round"/>
+                    </svg>
+                    {% else %}
+                    <span>{{ item.round.round_order }}</span>
+                    {% endif %}
+                </div>
+                <div class="rail-item-body">
+                    <strong>{{ item.round.name }}</strong>
+                    <small>{{ item.get_state_display }}</small>
+                </div>
+                {% if item.state == 'current' %}
+                <div class="rail-item-pulse" aria-hidden="true"></div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </nav>
+    </aside>
+
+    <!-- ░░ STAGE ░░ -->
+    <main class="sim-stage" id="simStage">
+
+        {% if current_progress %}
+
+        <!-- Focus bar -->
+        <header class="sim-focus-bar">
+            <div class="sim-focus-left">
+                <p class="sim-round-label">{{ current_progress.round.name }}</p>
+                <p class="sim-round-sub">{{ current_progress.round.instructions }}</p>
+                <p class="sim-round-duration" id="roundDurationDisplay"></p>
+            </div>
+            <div class="sim-timer-wrapper">
+                <div class="sim-timer" id="simTimer" data-remaining-seconds="{{ timer_remaining_seconds }}">
+                    <div class="timer-ring" aria-hidden="true">
+                        <svg class="timer-ring-svg" viewBox="0 0 80 80">
+                            <circle class="timer-ring-track" cx="40" cy="40" r="34"
+                                    fill="none" stroke-width="4"/>
+                            <circle class="timer-ring-fill" id="timerRingFill"
+                                    cx="40" cy="40" r="34" fill="none"
+                                    stroke-width="4" stroke-dasharray="213.6"
+                                    stroke-dashoffset="0" stroke-linecap="round"
+                                    transform="rotate(-90 40 40)"/>
+                        </svg>
+                        <div class="timer-inner">
+                            <span data-timer-display>{{ timer_display }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Progress track -->
+        <div class="sim-progress-track" aria-hidden="true">
+            <div class="spt-line" aria-hidden="true"></div>
+            <div class="spt-line-active" id="sptLineActive" aria-hidden="true"></div>
+            {% for question in questions %}
+            <div class="spt-node {% if question.id in answered_ids %}spt-node--done{% endif %}"
+                 data-pip="{{ forloop.counter0 }}"></div>
+            {% endfor %}
+        </div>
+
+        <!-- Expire form — untouched -->
+        <form method="post"
+              action="{% url 'interviews:expire_round' simulation.id %}"
+              data-expire-form hidden>
+            {% csrf_token %}
+        </form>
+
+        <!-- Question carousel -->
+        <div class="question-carousel" id="questionCarousel"
+             data-total="{{ questions|length }}"
+             data-answered-ids="{{ answered_ids|join:',' }}">
+
+            {% for question in questions %}
+            <article class="q-card {% if question.id in answered_ids %}q-card--answered{% endif %}"
+                     data-question-index="{{ forloop.counter0 }}"
+                     data-question-id="{{ question.id }}"
+                     aria-hidden="true">
+
+                <div class="q-card-header">
+                    <span class="q-competency">{{ question.competency }}</span>
+                    <div class="q-position">
+                        <span class="q-pos-current">{{ forloop.counter }}</span>
+                        <span class="q-pos-sep">/</span>
+                        <span class="q-pos-total">{{ questions|length }}</span>
+                    </div>
+                </div>
+
+                <div class="q-prompt-wrap">
+                    <h2 class="q-prompt">{{ question.prompt }}</h2>
+                </div>
+
+                {% if question.id in answered_ids %}
+                <div class="q-captured">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+                        <circle cx="9" cy="9" r="8" stroke="currentColor" stroke-width="1.8"/>
+                        <path d="M5.5 9.5L8 12L13.5 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Response captured. Awaiting final submission.
+                </div>
+                <div class="q-nav">
+                    <button class="q-nav-btn" type="button" data-prev
+                            aria-label="Previous question">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                            <path d="M9 2L4 7l5 5" stroke="currentColor" stroke-width="1.5"
+                                  stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Prev
+                    </button>
+                    <button class="q-nav-btn q-nav-btn--fwd" type="button" data-next
+                            aria-label="Next question">
+                        Next
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                            <path d="M5 2l5 5-5 5" stroke="currentColor" stroke-width="1.5"
+                                  stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+                {% else %}
+                <form method="post"
+                      action="{% url 'interviews:submit_answer' simulation.id %}"
+                      class="answer-form"
+                      data-answer-form>
+                    {% csrf_token %}
+                    <input type="hidden" name="question_id" value="{{ question.id }}">
+                    <input type="hidden" name="time_spent_seconds" value="0" data-time-input>
+                    <div class="textarea-shell">
+                        <textarea name="answer_text"
+                                  rows="8"
+                                  minlength="20"
+                                  required
+                                  placeholder="Respond with structured reasoning, concrete examples, and clear tradeoffs…"
+                                  data-autogrow></textarea>
+                        <div class="textarea-glow" aria-hidden="true"></div>
+                    </div>
+                    
+                    <div class="q-nav">
+                        <button class="q-nav-btn" type="button" data-prev
+                                aria-label="Previous question">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                                <path d="M9 2L4 7l5 5" stroke="currentColor" stroke-width="1.5"
+                                      stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Prev
+                        </button>
+                        
+                        <div class="q-nav-actions">
+                            <button class="btn-submit" type="submit">
+                                Submit Response
+                                <svg class="btn-submit-arrow" width="14" height="14"
+                                     viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                                    <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor"
+                                          stroke-width="1.5" stroke-linecap="round"
+                                          stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                            <button class="q-nav-btn q-nav-btn--fwd" type="button" data-next
+                                    aria-label="Next question">
+                                Next
+                                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                                    <path d="M5 2l5 5-5 5" stroke="currentColor" stroke-width="1.5"
+                                          stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="mini-next-msg" id="miniNextMsg">
+    <span class="mini-check">✓</span>
+    <span>Response recorded. Loading next question...</span>
+</div>
+
+                        <!-- Inline Cinematic Feedback (Hidden until submit) -->
+                        
+                    </div>
+                </form>
+                {% endif %}
+
+            </article>
+            {% endfor %}
+
+        </div><!-- /question-carousel -->
+
+        {% else %}
+
+        <!-- ░░ COMPLETION STATE ░░ -->
+        <div class="sim-completion">
+            <div class="sim-completion-inner">
+                <p class="sim-completion-eyebrow">{{ simulation.get_status_display }}</p>
+                <h1 class="sim-completion-heading">
+                    {% if simulation.status == "halted" %}
+                        More Practice<br>Recommended
+                    {% else %}
+                        Simulation<br>Complete
+                    {% endif %}
+                </h1>
+                <p class="sim-completion-body">
+                    {% if simulation.status == "halted" %}
+                        Your responses have been evaluated. Review your readiness report and complete the recommended roadmap before retrying.
+                    {% else %}
+                        All rounds are complete. Your readiness report is ready for review.
+                    {% endif %}
+                </p>
+                <div class="sim-completion-actions">
+                    {% if simulation.final_report %}
+                    <a class="btn-primary" href="{% url 'reports:detail' simulation.final_report.id %}">
+                        View Readiness Report
+                    </a>
+                    {% endif %}
+                    <form method="post"
+                          action="{% url 'interviews:retry' simulation.id %}"
+                          class="inline-form">
+                        {% csrf_token %}
+                        <button class="btn-ghost" type="submit">Retry Simulation</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        {% endif %}
+
+        <!-- ░░ ROUND HISTORY ░░ -->
+        {% if simulation.round_results.all %}
+        <details class="round-history">
+            <summary class="round-history-toggle">
+                <span>Round history</span>
+                <svg class="toggle-chevron" width="14" height="14" viewBox="0 0 14 14"
+                     fill="none" aria-hidden="true">
+                    <path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5"
+                          stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </summary>
+            <div class="round-history-body">
+                {% for result in simulation.round_results.all %}
+                <div class="rh-row">
+                    <span class="rh-name">{{ result.round.name }}</span>
+                    <span class="rh-decision rh-decision--{{ result.decision }}">
+                        {{ result.get_decision_display }} — {{ result.score }}%
+                    </span>
+                </div>
+                <p class="rh-feedback">{{ result.feedback }}</p>
+                {% endfor %}
+            </div>
+        </details>
+        {% endif %}
+
+    </main><!-- /sim-stage -->
+
+</section><!-- /sim-shell -->
+
+<!-- ░░ EVALUATION OVERLAY ░░ -->
+{% if round_transition and round_transition.result == "pass" %}
+<div class="round-cleared-modal" id="roundClearedModal" aria-hidden="false" role="dialog" aria-modal="true" aria-labelledby="roundClearedTitle" data-continue-url="{{ request.path }}">
+    <div class="round-cleared-card">
+        <div class="round-cleared-glyph" aria-hidden="true">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
+                <path d="M5 12l4.5 4.5 9.5-9.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+        <p class="round-cleared-kicker">Threshold Cleared</p>
+        <h2 id="roundClearedTitle">Round Cleared</h2>
+        <p class="round-cleared-name">{{ round_transition.round_name }}</p>
+        {% if round_transition.score %}
+        <div class="round-cleared-score">{{ round_transition.score }}%</div>
+        {% endif %}
+        {% if round_transition.feedback %}
+        <p class="round-cleared-feedback">{{ round_transition.feedback|truncatechars:220 }}</p>
+        {% endif %}
+        <button class="btn-primary" type="button" id="continueNextRound">
+            Continue to Next Round
+        </button>
+    </div>
+</div>
+{% endif %}
+
+<div class="eval-overlay" id="evalOverlay" aria-hidden="true" role="status">
+    <div class="eval-panel">
+        <div class="eval-spinner" aria-hidden="true">
+            <svg viewBox="0 0 64 64" fill="none">
+                <circle cx="32" cy="32" r="28" stroke="rgba(255,255,255,0.05)" stroke-width="3"/>
+                <circle cx="32" cy="32" r="28" stroke="url(#evalGrad)" stroke-width="3"
+                        stroke-dasharray="50 120" stroke-linecap="round"
+                        transform="rotate(-90 32 32)">
+                    <animateTransform attributeName="transform" type="rotate"
+                                      from="0 32 32" to="360 32 32"
+                                      dur="1.2s" repeatCount="indefinite"/>
+                </circle>
+                <defs>
+                    <linearGradient id="evalGrad" x1="0" y1="0" x2="64" y2="64">
+                        <stop offset="0%" stop-color="#8FB8FF"/>
+                        <stop offset="100%" stop-color="#78E6C2"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+        </div>
+        <p class="eval-status" id="evalStatus">Processing Simulation Data</p>
+        <div class="eval-steps" id="evalSteps" aria-hidden="true">
+            <span class="eval-step eval-step--active">Aggregating responses...</span>
+            <span class="eval-step">Cross-referencing technical benchmarks...</span>
+            <span class="eval-step">Generating readiness profile...</span>
+        </div>
+    </div>
+</div>
+
+<!-- ░░ ROUND RESULT OVERLAY ░░ -->
+<div class="result-overlay" id="resultOverlay" aria-hidden="true">
+    <div class="result-panel cinematic-panel" id="resultPanel">
+        <div class="result-glyph" id="resultGlyph" aria-hidden="true"></div>
+        <p class="result-verdict" id="resultVerdict"></p>
+        <h2 class="result-heading" id="resultHeading"></h2>
+        
+        <div class="result-score-wrap" id="resultScoreWrap" aria-hidden="true">
+            <span class="result-score-label" id="resultScoreLabel"></span>
+            <div class="result-score-bar">
+                <div class="result-score-fill" id="resultScoreFill"></div>
+            </div>
+        </div>
+
+        <p class="result-sub" id="resultSub"></p>
+        
+        <div class="result-actions" id="resultActions"></div>
+    </div>
+</div>
+
+{% endblock %}

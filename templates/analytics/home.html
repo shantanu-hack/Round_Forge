@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Analytics - Round Forge{% endblock %}
+{% block content %}
+<section class="page-shell">
+    <div class="page-heading"><p class="eyebrow">Readiness analytics</p><h1>Progress tracking</h1></div>
+    <div class="card-grid two">
+        {% for item in analytics %}
+            <article class="panel">
+                <p class="eyebrow">{{ item.company.name }}</p>
+                <h2>{{ item.average_readiness }}%</h2>
+                <p>Total simulations: {{ item.total_simulations }}</p>
+                <p>Strongest: {{ item.strongest_area|default:"Pending signal" }}</p>
+                <p>Weakest: {{ item.weakest_area|default:"Pending signal" }}</p>
+            </article>
+        {% empty %}
+            <p class="muted">Analytics are generated from final reports.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

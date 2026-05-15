@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Reports - Round Forge{% endblock %}
+{% block content %}
+<section class="page-shell">
+    <div class="page-heading"><p class="eyebrow">Readiness archive</p><h1>Final reports</h1></div>
+    <div class="card-grid two">
+        {% for report in reports %}
+            <article class="panel">
+                <p class="eyebrow">{{ report.simulation.company.name }}</p>
+                <h2>{{ report.readiness_percent }}% readiness</h2>
+                <p>{{ report.retry_recommendation }}</p>
+                <a class="button button-small" href="{% url 'reports:detail' report.id %}">Open report</a>
+            </article>
+        {% empty %}
+            <p class="muted">Reports appear after a simulation is completed or halted.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

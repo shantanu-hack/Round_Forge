@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Report - {{ report.simulation.company.name }}{% endblock %}
+{% block content %}
+<section class="page-shell">
+    <div class="report-hero">
+        <p class="eyebrow">{{ report.simulation.company.name }} readiness report</p>
+        {% if report.readiness_percent >= 85 %}
+            <div class="recommendation-badge recommendation-badge--strong">Strong Problem Solving Signal</div>
+        {% elif report.readiness_percent >= 70 %}
+            <div class="recommendation-badge recommendation-badge--ready">Proceed to Technical Interview</div>
+        {% else %}
+            <div class="recommendation-badge recommendation-badge--practice">Needs More Practice</div>
+        {% endif %}
+        <h1>{{ report.readiness_percent }}%</h1>
+        <p>{{ report.readiness_timeline }}</p>
+    </div>
+    <div class="split-layout">
+        <section class="panel">
+            <h2>Round analysis</h2>
+            {% for item in report.round_analysis %}
+                <div class="result-row"><span>{{ item.round }}</span><strong>{{ item.decision }} - {{ item.score }}%</strong></div>
+                <p class="muted">{{ item.feedback }}</p>
+            {% endfor %}
+            <h2>AI analysis</h2>
+            <p class="report-copy">{{ report.ai_generated_analysis }}</p>
+            <h2>Company alignment</h2>
+            <p class="report-copy">{{ report.company_alignment }}</p>
+        </section>
+        <aside class="panel">
+            <h2>Strengths</h2>
+            <div class="report-chip-stack">
+                {% for item in report.strengths %}
+                    <div class="report-chip report-chip--strength">{{ item }}</div>
+                {% endfor %}
+            </div>
+            <h2>Weaknesses</h2>
+            <div class="report-chip-stack">
+                {% for item in report.weaknesses %}
+                    <div class="report-chip report-chip--weakness">{{ item }}</div>
+                {% endfor %}
+            </div>
+            <h2>Roadmap</h2>
+            <div class="report-chip-stack">
+                {% for item in report.improvement_roadmap %}
+                    <div class="report-chip report-chip--roadmap">{{ item }}</div>
+                {% endfor %}
+            </div>
+            <h2>Resources</h2>
+            {% for resource in report.recommended_resources %}
+                <a class="list-row" href="{{ resource.url }}" target="_blank" rel="noreferrer"><span>{{ resource.title }}</span><strong>Open</strong></a>
+            {% endfor %}
+        </aside>
+    </div>
+</section>
+{% endblock %}

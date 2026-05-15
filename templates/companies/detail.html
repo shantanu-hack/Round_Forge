@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}{{ company.name }} - Round Forge{% endblock %}
+{% block content %}
+<section class="page-shell">
+    <div class="company-hero" style="--accent: {{ company.accent_color }}">
+        <p class="eyebrow">{{ company.pass_threshold }}% company benchmark</p>
+        <h1>{{ company.name }}</h1>
+        <p>{{ company.description }}</p>
+        <form method="post" action="{% url 'companies:start' company.slug %}">
+            {% csrf_token %}
+            <button class="button" type="submit">Start Interview Simulation</button>
+        </form>
+    </div>
+    <div class="split-layout">
+        <section class="panel">
+            <h2>Round sequence</h2>
+            {% for track in company.tracks.all %}
+                {% for round in track.rounds.all %}
+                    <div class="round-row">
+                        <span>{{ round.round_order }}</span>
+                        <div><strong>{{ round.name }}</strong><p>{{ round.instructions }}</p></div>
+                    </div>
+                {% endfor %}
+            {% endfor %}
+        </section>
+        <aside class="panel">
+            <h2>Recent attempts</h2>
+            {% for simulation in recent %}
+                <a class="list-row" href="{% url 'interviews:simulation' simulation.id %}">
+                    <span>{{ simulation.started_at|date:"M d, Y" }}</span>
+                    <strong>{{ simulation.get_status_display }}</strong>
+                </a>
+            {% empty %}
+                <p class="muted">No attempts for this company yet.</p>
+            {% endfor %}
+        </aside>
+    </div>
+</section>
+{% endblock %}

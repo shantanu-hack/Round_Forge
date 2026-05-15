@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Ops Insights - Round Forge{% endblock %}
+{% block content %}
+<section class="page-shell">
+    <div class="page-heading">
+        <p class="eyebrow">Lightweight admin analytics</p>
+        <h1>Round Forge Ops</h1>
+    </div>
+    <div class="stat-strip">
+        <div><strong>{{ stats.user_count }}</strong><span>Users</span></div>
+        <div><strong>{{ stats.simulation_count }}</strong><span>Simulations</span></div>
+        <div><strong>{{ stats.report_count }}</strong><span>Reports</span></div>
+        <div><strong>{{ stats.average_readiness|floatformat:1 }}%</strong><span>Avg readiness</span></div>
+    </div>
+    <div class="split-layout">
+        <section class="panel">
+            <h2>Recent simulations</h2>
+            {% for simulation in recent_simulations %}
+                <div class="list-row"><span>{{ simulation.user.email }} - {{ simulation.company.name }}</span><strong>{{ simulation.get_status_display }}</strong></div>
+            {% endfor %}
+        </section>
+        <aside class="panel">
+            <h2>Company averages</h2>
+            {% for item in company_stats %}
+                <div class="list-row"><span>{{ item.company__name }}</span><strong>{{ item.avg|default:0|floatformat:1 }}%</strong></div>
+            {% endfor %}
+        </aside>
+    </div>
+</section>
+{% endblock %}

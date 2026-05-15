@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Round Forge{% endblock %}
+{% block content %}
+<section class="page-shell">
+    <div class="page-heading">
+        <p class="eyebrow">Readiness console</p>
+        <h1>Welcome, {{ user.full_name|default:user.email }}</h1>
+    </div>
+    <div class="stat-strip">
+        <div><strong>{{ simulations|length }}</strong><span>Recent simulations</span></div>
+        <div><strong>{{ reports|length }}</strong><span>Reports</span></div>
+        <div><strong>{{ analytics|length }}</strong><span>Tracked companies</span></div>
+    </div>
+
+    <div class="split-layout">
+        <section>
+            <div class="section-heading compact">
+                <h2>Company simulations</h2>
+                <a href="{% url 'companies:list' %}">View all</a>
+            </div>
+            <div class="card-grid two">
+                {% for company in companies %}
+                    <article class="company-card" style="--accent: {{ company.accent_color }}">
+                        <div class="company-topline"><span class="company-dot"></span><span>{{ company.pass_threshold }}% benchmark</span></div>
+                        <h3>{{ company.name }}</h3>
+                        <p>{{ company.tagline }}</p>
+                        <a href="{% url 'companies:detail' company.slug %}">Open</a>
+                    </article>
+                {% endfor %}
+            </div>
+        </section>
+        <aside class="panel">
+            <h2>Recent activity</h2>
+            <div class="stack">
+                {% for simulation in simulations %}
+                    <a class="list-row" href="{% url 'interviews:simulation' simulation.id %}">
+                        <span>{{ simulation.company.name }}</span>
+                        <strong>{{ simulation.get_status_display }}</strong>
+                    </a>
+                {% empty %}
+                    <p class="muted">No simulations yet.</p>
+                {% endfor %}
+            </div>
+        </aside>
+    </div>
+</section>
+{% endblock %}

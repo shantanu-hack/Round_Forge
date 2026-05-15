@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Companies - Round Forge{% endblock %}
+{% block content %}
+<section class="page-shell">
+    <div class="page-heading">
+        <p class="eyebrow">Company benchmarks</p>
+        <h1>Simulation tracks</h1>
+    </div>
+    <div class="card-grid two">
+        {% for company in companies %}
+            <article class="company-card tall" style="--accent: {{ company.accent_color }}">
+                <div class="company-topline"><span class="company-dot"></span><span>{{ company.pass_threshold }}% threshold</span></div>
+                <h2>{{ company.name }}</h2>
+                <p>{{ company.description }}</p>
+                <p class="muted">{{ company.evaluation_style }}</p>
+                <a class="button button-small" href="{% url 'companies:detail' company.slug %}">Open simulation</a>
+            </article>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}
