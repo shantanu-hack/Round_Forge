@@ -477,7 +477,18 @@ def evaluate_round(company, interview_round, answers):
             raise ValueError(f"Gemini response missing: {missing}")
         return _normalise_payload(payload, company, interview_round, answers)
     except Exception as exc:
-        fallback = _fallback_evaluation(company, interview_round, answers)
-        fallback["feedback"] = "AI evaluation temporarily unavailable. Local fallback scoring was used."
-        fallback["raw"] = {"provider": "local_fallback", "error": str(exc)}
-        return fallback
+    import traceback
+
+    print("\n========== GEMINI ERROR ==========")
+    print(exc)
+    traceback.print_exc()
+    print("==================================\n")
+
+    fallback = _fallback_evaluation(company, interview_round, answers)
+    fallback["feedback"] = "AI evaluation temporarily unavailable. Local fallback scoring was used."
+    fallback["raw"] = {
+        "provider": "local_fallback",
+        "error": str(exc),
+    }
+
+    return fallback
