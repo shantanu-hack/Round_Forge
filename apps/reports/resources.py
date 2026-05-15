@@ -21,7 +21,7 @@ RESOURCE_MAP = {
     ],
     "communication": [
         {"title": "STAR method guide", "url": "https://www.themuse.com/advice/star-interview-method"},
-        {"title": "Google re:Work structured interviewing", "url": "https://rework.withgoogle.com/guides/hiring-use-structured-interviewing/steps/introduction/"},
+        {"title": "Google re:Work structured interviewing", "url": "https://rework.withgoogle.com/intl/en/guides/a-guide-to-structured-interviewing-for-better-hiring-practices"},
         {"title": "Toastmasters impromptu speaking tips", "url": "https://www.toastmasters.org/resources/public-speaking-tips"},
     ],
     "communication structure": [
