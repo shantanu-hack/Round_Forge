@@ -209,7 +209,7 @@ class SubmitAnswerViewTests(TestCase):
         self.assertIn("Interview session updated in another tab.", messages)
         self.assertEqual(UserAnswer.objects.filter(simulation=self.simulation).count(), 0)
 
-    @override_settings(GEMINI_API_KEY="test-key", GEMINI_MODEL="gemini-1.5-flash")
+    @override_settings(GEMINI_API_KEY="test-key", GEMINI_MODEL="gemini-2.5-pro")
     @patch("google.genai.Client")
     def test_evaluate_round_uses_modern_genai_sdk(self, client_mock):
         response = client_mock.return_value.__enter__.return_value.models.generate_content.return_value
@@ -237,14 +237,14 @@ class SubmitAnswerViewTests(TestCase):
 
         client_mock.assert_called_once_with(api_key="test-key")
         generate_content = client_mock.return_value.__enter__.return_value.models.generate_content
-        self.assertEqual(generate_content.call_args.kwargs["model"], "gemini-1.5-flash")
+        self.assertEqual(generate_content.call_args.kwargs["model"], "gemini-2.5-pro")
         self.assertEqual(payload["raw"]["raw_score"], 84)
         self.assertLessEqual(payload["score"], 70)
         self.assertEqual(payload["decision"], "passed")
         self.assertEqual(payload["strengths"], ["Structured reasoning"])
         self.assertEqual(payload["improvement_roadmap"], ["Practice concise metrics."])
 
-    @override_settings(GEMINI_API_KEY="test-key", GEMINI_MODEL="gemini-1.5-flash")
+    @override_settings(GEMINI_API_KEY="test-key", GEMINI_MODEL="gemini-2.5-pro")
     @patch("google.genai.Client")
     def test_evaluate_round_falls_back_when_genai_fails(self, client_mock):
         client_mock.return_value.__enter__.return_value.models.generate_content.side_effect = RuntimeError("api failed")

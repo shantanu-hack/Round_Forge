@@ -134,7 +134,7 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 
 GEMINI_API_KEY = env("GEMINI_API_KEY", default="")
-GEMINI_MODEL = env("GEMINI_MODEL", default="gemini-1.5-flash")
+GEMINI_MODEL = env("GEMINI_MODEL", default="gemini-2.5-pro")
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SESSION_COOKIE_HTTPONLY = True
