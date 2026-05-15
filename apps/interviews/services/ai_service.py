@@ -457,25 +457,38 @@ company_benchmark: concise benchmark explanation
 
 def evaluate_round(company, interview_round, answers):
     answers = list(answers)
+
     if not settings.GEMINI_API_KEY:
         return _fallback_evaluation(company, interview_round, answers)
 
     try:
-        from google import genai
-        from google.genai import types
+        import google.generativeai as genai
 
-        model = settings.GEMINI_MODEL or "gemini-1.5-flash"
-        with genai.Client(api_key=settings.GEMINI_API_KEY) as client:
-            response = client.models.generate_content(
-                model=model,
-                contents=build_round_prompt(company, interview_round, answers),
-                config=types.GenerateContentConfig(response_mime_type="application/json"),
-            )
+        genai.configure(api_key=settings.GEMINI_API_KEY)
+
+        model = genai.GenerativeModel(
+            settings.GEMINI_MODEL or "gemini-2.5-pro"
+        )
+
+        response = model.generate_content(
+            build_round_prompt(company, interview_round, answers)
+        )
+
         payload = json.loads(_strip_json_fence(response.text))
+
         if not REQUIRED_KEYS.issubset(payload):
             missing = ", ".join(sorted(REQUIRED_KEYS - set(payload)))
-            raise ValueError(f"Gemini response missing: {missing}")
-        return _normalise_payload(payload, company, interview_round, answers)
+            raise ValueError(
+                f"Gemini response missing: {missing}"
+            )
+
+        return _normalise_payload(
+            payload,
+            company,
+            interview_round,
+            answers
+        )
+
     except Exception as exc:
         import traceback
 
@@ -484,11 +497,20 @@ def evaluate_round(company, interview_round, answers):
         traceback.print_exc()
         print("==================================\n")
 
-        fallback = _fallback_evaluation(company, interview_round, answers)
-        fallback["feedback"] = "AI evaluation temporarily unavailable. Local fallback scoring was used."
+        fallback = _fallback_evaluation(
+            company,
+            interview_round,
+            answers
+        )
+
+        fallback["feedback"] = (
+            "AI evaluation temporarily unavailable. "
+            "Local fallback scoring was used."
+        )
+
         fallback["raw"] = {
             "provider": "local_fallback",
             "error": str(exc),
-    }
+        }
 
-    return fallback
+        return fallback
